@@ -1,0 +1,6 @@
+from django.apps import AppConfig
+
+
+class ImagesRestApiConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'images_rest_api'
