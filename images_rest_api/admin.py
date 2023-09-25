@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import AccountType, ThumbnailSize, CustomUser
+from .models import AccountType, ThumbnailSize, CustomUser, UserImage
 
 
 @admin.register(AccountType)
@@ -19,3 +19,7 @@ class ThumbnailSizeAdmin(admin.ModelAdmin):
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = ('__str__',)
+
+@admin.register(UserImage)
+class UserImageAdmin(admin.ModelAdmin):
+    list_display = ('name',)

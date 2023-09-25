@@ -21,7 +21,7 @@ class CustomUserManager(UserManager):
     def create_superuser(self, username, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('account_type', None)
+        extra_fields.setdefault('account_type', AccountType.objects.first())
         return self._create_user(username, email, password, **extra_fields)
     
 class CustomUser(AbstractUser):
@@ -39,3 +39,11 @@ class CustomUser(AbstractUser):
     class Meta:
         verbose_name = "custom user"
         verbose_name_plural = "custom users"
+
+class UserImage(models.Model):
+    name = models.CharField(max_length=64)
+    image = models.ImageField(upload_to='users-images')
+
+    def delete(self):
+        self.image.delete()
+        super().delete()
