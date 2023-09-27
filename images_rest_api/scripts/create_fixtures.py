@@ -1,4 +1,5 @@
-from ..models import AccountType, ThumbnailSize
+from ..models import AccountType, ThumbnailSize, CustomUser
+
 
 def run():
     thumbnail_size_200, created = ThumbnailSize.objects.get_or_create(size=200)
@@ -25,3 +26,6 @@ def run():
     basic_account_type.thumbs.set([thumbnail_size_200])
     premium_account_type.thumbs.set([thumbnail_size_200, thumbnail_size_400])
     enterprise_account_type.thumbs.set([thumbnail_size_200, thumbnail_size_400])
+
+    if not CustomUser.objects.all():
+        CustomUser.objects.create_superuser('admin', 'admin@admin.pl', 'admin')

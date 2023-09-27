@@ -137,7 +137,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticated"
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
@@ -150,7 +150,7 @@ AUTH_USER_MODEL = "images_rest_api.CustomUser"
 
 
 STORAGES = {
-    "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+    "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
     "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3StaticStorage"},
 }
 
@@ -166,4 +166,4 @@ AWS_QUERYSTRING_AUTH = os.environ.get("AWS_QUERYSTRING_AUTH")
 AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN")
 AWS_CLOUDFRONT_KEY_ID = os.environ.get("AWS_CLOUDFRONT_KEY_ID")
 AWS_CLOUDFRONT_KEY = os.environ.get("AWS_CLOUDFRONT_KEY")
-AWS_QUERYSTRING_AUTH = False
+
