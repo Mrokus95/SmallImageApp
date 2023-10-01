@@ -28,4 +28,4 @@ def run():
     enterprise_account_type.thumbs.set([thumbnail_size_200, thumbnail_size_400])
 
     if not CustomUser.objects.all():
-        CustomUser.objects.create_superuser('admin', 'admin@admin.pl', 'admin')
+        CustomUser.objects.create_superuser("admin", "admin@admin.pl", "admin")
