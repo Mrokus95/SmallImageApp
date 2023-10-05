@@ -1,4 +1,13 @@
 from ..models import AccountType, ThumbnailSize, CustomUser
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+DJANGO_SUPERUSER_USERNAME = os.environ.get("DJANGO_SUPERUSER_USERNAME")
+DJANGO_SUPERUSER_PASSWORD = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
+DJANGO_SUPERUSER_EMAIL = os.environ.get("DJANGO_SUPERUSER_EMAIL")
 
 
 def run():
@@ -28,4 +37,7 @@ def run():
     enterprise_account_type.thumbs.set([thumbnail_size_200, thumbnail_size_400])
 
     if not CustomUser.objects.all():
-        CustomUser.objects.create_superuser("admin", "admin@admin.pl", "admin")
+        CustomUser.objects.create_superuser(
+            DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, 
+            DJANGO_SUPERUSER_PASSWORD
+        )

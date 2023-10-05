@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
-from rest_framework import serializers
-from .models import UserImage, Thumbnail
 from PIL import Image
-from io import BytesIO
-
+from rest_framework import serializers
+from .models import Thumbnail, UserImage
 
 User = get_user_model()
 
@@ -21,25 +19,26 @@ class AddImageSerializer(serializers.ModelSerializer):
 
     def validate_image(self, value):
         if not value:
-            raise serializers.ValidationError("To pole jest wymagane.")
+            raise serializers.ValidationError("This field is required.")
 
-        # Sprawdź rozszerzenie pliku
         image_extension = value.name.split(".")[-1].lower()
         if image_extension not in ["jpg", "jpeg" "png"]:
             raise serializers.ValidationError(
-                f"{image_extension} - Niedozwolone rozszerzenie pliku. Akceptowane są tylko pliki JPG i PNG."
+                f"{image_extension} - Invalid file extension. Only JPG, JPEG,"
+                "and PNG files are accepted."
             )
 
-        # Sprawdź zawartość pliku
         try:
             img = Image.open(value)
             if img.format.lower() not in ["jpg", "jpeg", "png"]:
                 raise serializers.ValidationError(
-                    "Nieprawidłowy format obrazu. Akceptowane są tylko obrazy JPG i PNG."
+                    f"{image_extension} - Invalid file format. Only JPG, JPEG,"
+                    "and PNG files are accepted."
                 )
         except Exception as e:
             raise serializers.ValidationError(
-                "Nie można otworzyć pliku jako obraz. Sprawdź, czy przesyłany plik jest prawidłowym obrazem."
+                "Cannot open the file as an image."
+                " Please check if the uploaded file is a valid image."
             )
 
         return value

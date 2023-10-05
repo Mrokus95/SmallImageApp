@@ -91,40 +91,34 @@ class GenerateTemporaryLinkView(views.APIView):
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
-        # Pobierz typ pliku ('user_image' lub 'thumbnail') i ID pliku z parametrów URL
         file_type = kwargs.get("file_type")
         file_id = kwargs.get("file_id")
 
-        # Ustal czas ważności linku w sekundach (od 100 do 1000 sekund)
         expiration_time_seconds = int(
             request.query_params.get("expiration_time_seconds", 3600)
-        )  # Domyślnie 1 godzina
+        )
 
         if expiration_time_seconds < 300 or expiration_time_seconds > 30000:
             return Response(
-                {"error": "Nieprawidłowy czas trwania linku."},
+                {"error": "Invalid link duration."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Wybierz odpowiedni model pliku na podstawie typu
         if file_type == "user_image":
             model_class = UserImage
         elif file_type == "thumbnail":
             model_class = Thumbnail
         else:
             return Response(
-                {"error": "Nieprawidłowy typ pliku."},
+                {"error": "Invalid file type."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Pobierz plik na podstawie ID
         file_instance = get_object_or_404(model_class, id=file_id)
         self.check_object_permissions(self.request, file_instance)
 
-        # Pobierz klucz pliku z instancji pliku
         file_key = file_instance.image.name
 
-        # Wygeneruj tymczasowy link do pobrania pliku z AWS S3
         s3 = boto3.client(
             "s3",
             region_name=settings.AWS_S3_REGION_NAME,
@@ -139,9 +133,8 @@ class GenerateTemporaryLinkView(views.APIView):
             )
         except NoCredentialsError:
             return Response(
-                {"error": "Brak dostępu do zasobów AWS."},
+                {"error": "No access to AWS resources."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # Zwróć wygenerowany link tymczasowy jako odpowiedź
         return Response({"temporary_url": temporary_url}, status=status.HTTP_200_OK)

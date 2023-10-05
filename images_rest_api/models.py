@@ -1,19 +1,12 @@
-from django.contrib.auth.models import AbstractUser, UserManager
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
 import uuid
-
-from PIL import Image as pilimage
 from io import BytesIO
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import boto3
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from PIL import Image as pilimage
 
 
 class ThumbnailSize(models.Model):
