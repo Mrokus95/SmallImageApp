@@ -10,7 +10,6 @@ from .serializers import (
 from .models import UserImage, CustomUser, Thumbnail
 from rest_framework import permissions
 from rest_framework import status
-from PIL import Image as pilimage
 from django.shortcuts import get_object_or_404
 from rest_framework import views
 import boto3
