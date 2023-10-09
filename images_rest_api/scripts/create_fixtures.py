@@ -38,6 +38,8 @@ def run():
 
     if not CustomUser.objects.all():
         CustomUser.objects.create_superuser(
-            DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, 
-            DJANGO_SUPERUSER_PASSWORD
+            DJANGO_SUPERUSER_USERNAME,
+            DJANGO_SUPERUSER_EMAIL,
+            DJANGO_SUPERUSER_PASSWORD,
+            enterprise_account_type,
         )

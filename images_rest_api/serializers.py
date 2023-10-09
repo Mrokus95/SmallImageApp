@@ -64,3 +64,4 @@ class NotBasicUserImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserImage
         fields = ["id", "name", "image", "thumbnails"]
+
