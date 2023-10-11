@@ -1,24 +1,41 @@
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.response import Response
-from django.http import JsonResponse
-from .serializers import (
-    UserSerializer,
-    BasicUserImageSerializer,
-    NotBasicUserImageSerializer,
-    AddImageSerializer,
-)
-from .models import UserImage, CustomUser, Thumbnail
-from rest_framework import permissions
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from rest_framework import views
 import boto3
 from botocore.exceptions import NoCredentialsError
 from django.conf import settings
+from django.contrib.auth import get_user_model, login
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from knox.models import AuthToken
+from knox.views import LoginView as KnoxLoginView
+from rest_framework import generics, permissions, status, views
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from .models import Thumbnail, UserImage
+from .serializers import (AddImageSerializer, AuthSerializer,
+                          BasicUserImageSerializer, ChangePasswordSerializer,
+                          NotBasicUserImageSerializer, UserSerializer)
+
+User = get_user_model()
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission class to allow object access only to the owner or read-only for others.
+    """
+
     def has_object_permission(self, request, view, obj):
+        """
+        Check if the request user has permission to access the object.
+
+        Args:
+            request: The HTTP request object.
+            view: The view instance.
+            obj: The object being accessed.
+
+        Returns:
+            bool: True if the user has permission, False otherwise.
+        """
         if request.method in permissions.SAFE_METHODS:
             return True
 
@@ -26,20 +43,166 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 
 class IsOwnerAndEnterprise(permissions.BasePermission):
+    """
+    Custom permission class to allow access to the owner with a time-limited link and the enterprise account.
+    """
+
     def has_object_permission(self, request, view, obj):
+        """
+        Check if the request user has permission to access the object.
+
+        Args:
+            request: The HTTP request object.
+            view: The view instance.
+            obj: The object being accessed.
+
+        Returns:
+            bool: True if the user has permission, False otherwise.
+        """
         is_owner = obj.author == request.user
 
         has_time_limited_link = request.user.account_type.time_limited_link
         return is_owner and has_time_limited_link
 
 
-class UserViewSet(ModelViewSet):
-    queryset = CustomUser.objects.all()
+class CreateUserView(generics.CreateAPIView):
+    """
+    View for creating a new user.
+    """
+
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for user creation.
+
+        Args:
+            request: The HTTP request object.
+            args: Additional positional arguments.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: The HTTP response.
+        """
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(
+                {
+                    "user": UserSerializer(
+                        user, context=self.get_serializer_context()
+                    ).data,
+                    "token": AuthToken.objects.create(user)[1],
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    """
+    An endpoint for changing password.
+    """
+
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        """
+        Retrieve and return the authenticated user.
+
+        Args:
+            queryset: The database query.
+
+        Returns:
+            object: The authenticated user.
+        """
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        """
+        Handle password update requests.
+
+        Args:
+            request: The HTTP request object.
+            args: Additional positional arguments.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            Response: The HTTP response.
+        """
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+
+            return Response(
+                {
+                    "status": "success",
+                    "code": status.HTTP_200_OK,
+                    "message": "Password updated successfully",
+                    "data": [],
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(KnoxLoginView):
+    """
+    An endpoint for user login.
+    """
+
+    serializer_class = AuthSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, format=None):
+        """
+        Handle user login requests.
+
+        Args:
+            request: The HTTP request object.
+            format: The response format.
+
+        Returns:
+            Response: The HTTP response.
+        """
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        login(request, user)
+        return super(LoginView, self).post(request, format=None)
+
+
+class ManageUserView(generics.RetrieveUpdateAPIView):
+    """
+    Manage the authenticated user.
+    """
+
+    serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        """
+        Retrieve and return the authenticated user.
+
+        Returns:
+            object: The authenticated user.
+        """
+        return self.request.user
 
 
 class UserImagesViewSet(ModelViewSet):
+    """
+    Viewset for managing user images.
+    """
+
     permission_classes = [IsOwnerOrReadOnly]
     http_method_names = ["get", "post", "delete"]
 
@@ -86,6 +249,10 @@ class UserImagesViewSet(ModelViewSet):
 
 
 class GenerateTemporaryLinkView(views.APIView):
+    """
+    Generate temporary links to access files.
+    """
+
     permission_classes = [IsOwnerAndEnterprise]
     http_method_names = ["get"]
 

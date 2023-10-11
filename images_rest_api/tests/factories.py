@@ -2,6 +2,7 @@ import io
 import random
 
 import factory
+from factory import Sequence
 from django.core.files.uploadedfile import SimpleUploadedFile
 from factory.django import DjangoModelFactory
 from faker import Factory as FakerFactory
@@ -26,7 +27,7 @@ class AccountTypeFactory(DjangoModelFactory):
         model = AccountType
         skip_postgeneration_save = True
 
-    name = factory.Faker("word")
+    name = Sequence(lambda n: f"AccountType {n}")
     orginal_image_link = factory.Faker("boolean")
     time_limited_link = factory.Faker("boolean")
 
@@ -53,6 +54,7 @@ class CustomUserFactory(DjangoModelFactory):
     username = fake.unique.name()
     account_type = factory.SubFactory(AccountTypeFactory)
     email = fake.unique.email()
+    password = 'Strongpassword'
     is_staff = False
     is_active = True
     is_superuser = False

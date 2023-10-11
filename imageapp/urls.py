@@ -19,8 +19,8 @@ from django.urls import path, include
 from rest_framework.authtoken import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('auth-api/', include('rest_framework.urls')),
-    path('get-token/', views.obtain_auth_token),
-    path('rest-api/v1/', include('imageapp.api')),
+    path("admin/", admin.site.urls),
+    path("api/auth/", include('knox.urls')),
+    path("get-token/", views.obtain_auth_token),
+    path("rest-api/v1/", include("imageapp.api")),
 ]
