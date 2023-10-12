@@ -69,10 +69,10 @@ class UserImageFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(CustomUserFactory)
 
     @staticmethod
-    def create_image(file_full_name, size, content_type):
+    def create_image(file_full_name, size, content_type, format="JPEG"):
         image = Image.new("RGB", (size, size))
         image_io = io.BytesIO()
-        image.save(image_io, format="JPEG")
+        image.save(image_io, format=format)
         image_file = SimpleUploadedFile(
             file_full_name, image_io.getvalue(), content_type=content_type
         )

@@ -1,4 +1,5 @@
 from pytest_factoryboy import register
+import pytest
 
 from .factories import (
     ThumbnailSizeFactory,
@@ -6,6 +7,7 @@ from .factories import (
     CustomUserFactory,
     UserImageFactory,
 )
+pytestmark = pytest.mark.django_db
 
 register(ThumbnailSizeFactory)
 register(AccountTypeFactory)

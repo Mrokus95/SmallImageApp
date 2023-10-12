@@ -166,3 +166,7 @@ AWS_QUERYSTRING_AUTH = os.environ.get("AWS_QUERYSTRING_AUTH")
 AWS_S3_CUSTOM_DOMAIN = os.environ.get("AWS_S3_CUSTOM_DOMAIN")
 AWS_CLOUDFRONT_KEY_ID = os.environ.get("AWS_CLOUDFRONT_KEY_ID")
 AWS_CLOUDFRONT_KEY = os.environ.get("AWS_CLOUDFRONT_KEY")
+
+REST_KNOX = {
+    'USER_SERIALIZER': 'images_rest_api.serializers.UserSerializer'
+}

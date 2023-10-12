@@ -1,9 +1,8 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from PIL import Image
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import Thumbnail, UserImage, CustomUser
 
+from .models import CustomUser, Thumbnail, UserImage
 
 User = get_user_model()
 
@@ -20,24 +19,34 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.get("password")
         account_type = validated_data.get("account_type")
 
+        user = User(
+            username=username,
+            email=email,
+            account_type=account_type,
+        )
+        user.set_password(password)
+        user.save()
+        return user
+
+    def validate_username(self, data):
+        username = data
+
         if User.objects.filter(username=username).exists():
             raise serializers.ValidationError(
-                "Użytkownik o tej nazwie użytkownika już istnieje."
+                {"username": "A user with this username already exists."}
             )
+
+        return data
+
+    def validate_email(self, data):
+        email = data
 
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
-                "Użytkownik o tym adresie e-mail już istnieje."
+                "A user with this email address already exists."
             )
 
-        user = CustomUser(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            account_type=validated_data["account_type"],
-        )
-        user.set_password(validated_data["password"])
-        user.save()
-        return user
+        return data
 
 
 class AuthSerializer(serializers.ModelSerializer):
@@ -48,17 +57,15 @@ class AuthSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         username = attrs.get("username")
         password = attrs.get("password")
-
         user = authenticate(
             request=self.context.get("request"), username=username, password=password
         )
-
-        if not user:
-            msg = "Unable to authenticate with provided credentials"
-            raise serializers.ValidationError(msg, code="authentication")
+        if user is None:
+            msg = "Unable to authenticate with provided credentials."
+            raise serializers.ValidationError({"authentication": msg})
 
         attrs["user"] = user
-        return
+        return attrs
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -82,14 +89,19 @@ class ChangePasswordSerializer(serializers.Serializer):
         )
 
         if not user:
-            msg = "Unable to authenticate with provided credentials"
-            raise serializers.ValidationError(msg, code="authentication")
+            msg = "Unable to authenticate with provided credentials."
+            raise serializers.ValidationError({"old_password": msg})
 
         if len(new_password) < 7:
-            msg = "New password must be at least 7 characters long"
-            raise serializers.ValidationError(msg, code="password_too_short")
+            msg = "New password must be at least 7 characters long."
+            raise serializers.ValidationError({"new_password": msg})
 
         return attrs
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data["new_password"])
+        instance.save()
+        return instance
 
 
 class AddImageSerializer(serializers.ModelSerializer):

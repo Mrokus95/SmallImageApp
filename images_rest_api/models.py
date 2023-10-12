@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager
+from django.core.validators import MinValueValidator
 
 
 class ThumbnailSize(models.Model):
@@ -119,7 +120,10 @@ class Thumbnail(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="client_thumbnails"
     )
-    size = models.IntegerField(verbose_name="Size")
+    size = models.IntegerField(
+        verbose_name="Size",
+        validators=[MinValueValidator(1)],
+    )
 
     image = models.ImageField(upload_to="user_images/thumbnails")
 
