@@ -69,7 +69,8 @@ class CreateUserView(generics.CreateAPIView):
     """
     View for creating a new user.
     """
-
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["post"]
     serializer_class = UserSerializer
 
     def post(self, request, *args, **kwargs):
@@ -104,10 +105,10 @@ class ChangePasswordView(generics.UpdateAPIView):
     """
     An endpoint for changing password.
     """
-
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["update"]
     serializer_class = ChangePasswordSerializer
     model = User
-    permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self, queryset=None):
         """
@@ -161,6 +162,7 @@ class LoginView(KnoxLoginView):
 
     serializer_class = AuthSerializer
     permission_classes = (permissions.AllowAny,)
+    http_method_names = ["post"]
 
     def post(self, request, format=None):
         """
@@ -187,6 +189,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    http_method_names = ["get"]
 
     def get_object(self):
         """
@@ -203,7 +206,7 @@ class UserImagesViewSet(ModelViewSet):
     Viewset for managing user images.
     """
 
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated&IsOwnerOrReadOnly]
     http_method_names = ["get", "post", "delete"]
 
     def get_serializer_class(self):
@@ -253,7 +256,7 @@ class GenerateTemporaryLinkView(views.APIView):
     Generate temporary links to access files.
     """
 
-    permission_classes = [IsOwnerAndEnterprise]
+    permission_classes = [permissions.IsAuthenticated&IsOwnerAndEnterprise]
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):

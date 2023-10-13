@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
 from faker import Faker
 
-from ..models import Thumbnail, UserImage, AccountType
+from ..models import AccountType, Thumbnail, UserImage
 from .factories import (
     AccountTypeFactory,
     CustomUserFactory,
@@ -15,8 +15,9 @@ from .factories import (
 
 fake = Faker()
 
+pytestmark = pytest.mark.django_db
 
-@pytest.mark.django_db
+
 class TestCustomUser:
     def setup_method(self):
         self.account_type = AccountTypeFactory()
@@ -96,7 +97,6 @@ class TestCustomUser:
             get_user_model().objects.get(id=user_id)
 
 
-@pytest.mark.django_db
 class TestThumbnailSizeModel:
     def setup_method(self):
         self.thumbnail_size = ThumbnailSizeFactory(size=100)
@@ -117,7 +117,6 @@ class TestThumbnailSizeModel:
         assert size >= 50 and size <= 200
 
 
-@pytest.mark.django_db
 class TestAccountTypeModel:
     def setup_method(self):
         self.account_type = AccountTypeFactory(name="Basic")
@@ -137,7 +136,6 @@ class TestAccountTypeModel:
         assert isinstance(self.account_type.time_limited_link, bool)
 
 
-@pytest.mark.django_db
 class TestUserImageModel:
     def test_save_method(self):
         user = CustomUserFactory()

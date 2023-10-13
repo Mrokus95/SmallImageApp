@@ -19,144 +19,139 @@ from .factories import AccountTypeFactory, CustomUserFactory, UserImageFactory
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.django_db
-def test_user_serializer_fields():
-    user = CustomUserFactory()
+class TestUserSerializer:
+    def test_user_serializer_fields(self):
+        user = CustomUserFactory()
 
-    serializer = UserSerializer(instance=user)
+        serializer = UserSerializer(instance=user)
 
-    assert "username" in serializer.data
-    assert "email" in serializer.data
-    assert "account_type" in serializer.data
+        assert "username" in serializer.data
+        assert "email" in serializer.data
+        assert "account_type" in serializer.data
 
+    def test_user_serializer_data(self):
+        user = CustomUserFactory()
 
-@pytest.mark.django_db
-def test_user_serializer_data():
-    user = CustomUserFactory()
+        serializer = UserSerializer(instance=user)
 
-    serializer = UserSerializer(instance=user)
+        assert serializer.data["username"] == user.username
+        assert serializer.data["email"] == user.email
+        assert serializer.data["account_type"] == user.account_type.id
 
-    assert serializer.data["username"] == user.username
-    assert serializer.data["email"] == user.email
-    assert serializer.data["account_type"] == user.account_type.id
+    def test_user_serializer_validation(self):
+        data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "account_type": "3",
+        }
 
+        serializer = UserSerializer(data=data)
 
-@pytest.mark.django_db
-def test_user_serializer_validation():
-    data = {"username": "testuser", "email": "test@example.com", "account_type": "3"}
+        assert serializer.is_valid()
 
-    serializer = UserSerializer(data=data)
+    def test_user_serializer_validation(self):
+        data = {
+            "username": "testuser",
+            "email2": "test@example.com",
+            "account_type": "3",
+        }
 
-    assert serializer.is_valid()
+        serializer = UserSerializer(data=data)
 
+        assert serializer.is_valid() is False
 
-@pytest.mark.django_db
-def test_user_serializer_validation():
-    data = {"username": "testuser", "email2": "test@example.com", "account_type": "3"}
+    def test_user_serializer_save(self):
+        account_type = AccountTypeFactory().id
 
-    serializer = UserSerializer(data=data)
+        data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "StrongPassword",
+            "account_type": account_type,
+        }
 
-    assert serializer.is_valid() is False
+        serializer = UserSerializer(data=data)
 
+        assert serializer.is_valid()
+        user = serializer.save()
 
-@pytest.mark.django_db
-def test_user_serializer_save():
-    account_type = AccountTypeFactory().id
+        assert user is not None
+        assert user.username == "testuser"
+        assert user.email == "test@example.com"
+        assert user.account_type.id == account_type
 
-    data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "StrongPassword",
-        "account_type": account_type,
-    }
+    def test_user_serializer_missing_fields(self):
+        account_type = AccountTypeFactory().id
 
-    serializer = UserSerializer(data=data)
+        data = {
+            "email": "test@example.com",
+            "password": "StrongPassword",
+            "account_type": account_type,
+        }
+        serializer = UserSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "This field is required." in serializer.errors["username"]
 
-    assert serializer.is_valid()
-    user = serializer.save()
+        data = {
+            "username": "testuser",
+            "password": "StrongPassword",
+            "account_type": account_type,
+        }
+        serializer = UserSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "This field is required." in serializer.errors["email"]
 
-    assert user is not None
-    assert user.username == "testuser"
-    assert user.email == "test@example.com"
-    assert user.account_type.id == account_type
+        data = {
+            "username": "testuser",
+            "password": "StrongPassword",
+        }
+        serializer = UserSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "This field is required." in serializer.errors["email"]
+        assert "This field is required." in serializer.errors["account_type"]
 
+        data = {}
+        serializer = UserSerializer(data=data)
+        assert not serializer.is_valid()
+        assert "This field is required." in serializer.errors["username"]
+        assert "This field is required." in serializer.errors["password"]
+        assert "This field is required." in serializer.errors["email"]
+        assert "This field is required." in serializer.errors["account_type"]
 
-def test_user_serializer_missing_fields():
-    account_type = AccountTypeFactory().id
+    def test_user_serializer_duplicate_email(self):
+        account_type = AccountTypeFactory().id
+        user_data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "StrongPassword",
+            "account_type": account_type,
+        }
 
-    data = {
-        "email": "test@example.com",
-        "password": "StrongPassword",
-        "account_type": account_type,
-    }
-    serializer = UserSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "This field is required." in serializer.errors["username"]
+        serializer = UserSerializer(data=user_data)
+        assert serializer.is_valid()
 
-    data = {
-        "username": "testuser",
-        "password": "StrongPassword",
-        "account_type": account_type,
-    }
-    serializer = UserSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "This field is required." in serializer.errors["email"]
+        serializer.save()
+        user_data["username"] = "testuser2"
+        serializer = UserSerializer(data=user_data)
+        assert not serializer.is_valid()
 
-    data = {
-        "username": "testuser",
-        "password": "StrongPassword",
-    }
-    serializer = UserSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "This field is required." in serializer.errors["email"]
-    assert "This field is required." in serializer.errors["account_type"]
+    def test_user_serializer_duplicate_username(self):
+        account_type = AccountTypeFactory().id
+        user_data = {
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "StrongPassword",
+            "account_type": account_type,
+        }
+        serializer = UserSerializer(data=user_data)
+        assert serializer.is_valid()
 
-    data = {}
-    serializer = UserSerializer(data=data)
-    assert not serializer.is_valid()
-    assert "This field is required." in serializer.errors["username"]
-    assert "This field is required." in serializer.errors["password"]
-    assert "This field is required." in serializer.errors["email"]
-    assert "This field is required." in serializer.errors["account_type"]
-
-
-def test_user_serializer_duplicate_email():
-    account_type = AccountTypeFactory().id
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "StrongPassword",
-        "account_type": account_type,
-    }
-
-    serializer = UserSerializer(data=user_data)
-    assert serializer.is_valid()
-
-    serializer.save()
-    user_data["username"] = "testuser2"
-    serializer = UserSerializer(data=user_data)
-    assert not serializer.is_valid()
-
-
-@pytest.mark.django_db
-def test_user_serializer_duplicate_username():
-    account_type = AccountTypeFactory().id
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "StrongPassword",
-        "account_type": account_type,
-    }
-    serializer = UserSerializer(data=user_data)
-    assert serializer.is_valid()
-
-    serializer.save()
-    user_data["email"] = "new@example.com"
-    serializer = UserSerializer(data=user_data)
-    assert not serializer.is_valid()
+        serializer.save()
+        user_data["email"] = "new@example.com"
+        serializer = UserSerializer(data=user_data)
+        assert not serializer.is_valid()
 
 
-@pytest.mark.django_db
 class TestAuthSerializer:
     @pytest.fixture
     def user(self):
@@ -169,13 +164,11 @@ class TestAuthSerializer:
     def auth_serializer(self):
         return AuthSerializer()
 
-    @pytest.mark.django_db
     def test_auth_serializer_valid_user(self, user, auth_serializer):
         data = {"username": user.username, "password": "ValidPassword"}
         result = auth_serializer.validate(data)
         assert result == data
 
-    @pytest.mark.django_db
     def test_auth_serializer_invalid_user(self, user, auth_serializer):
         data = {"username": "username2", "password": "ValidPassword"}
         auth_serializer = AuthSerializer(data=data)
@@ -186,7 +179,6 @@ class TestAuthSerializer:
             in auth_serializer.errors["authentication"]
         )
 
-    @pytest.mark.django_db
     def test_auth_serializer_no_user(self):
         data = {"username": "nonexistentuser", "password": "AnyPassword"}
         auth_serializer = AuthSerializer(data=data)
@@ -197,7 +189,6 @@ class TestAuthSerializer:
         )
 
 
-@pytest.mark.django_db
 class TestChangePasswordSerializer:
     @pytest.fixture
     def user(self):
@@ -210,7 +201,6 @@ class TestChangePasswordSerializer:
     def change_password_serializer(self):
         return ChangePasswordSerializer()
 
-    @pytest.mark.django_db
     def test_change_password_serializer_correct_update(self, user):
         auth_token, token_instance = AuthToken.objects.create(user)
 
@@ -228,7 +218,6 @@ class TestChangePasswordSerializer:
 
         assert serializer.is_valid()
 
-    @pytest.mark.django_db
     def test_change_password_serializer_incorrect_old_password(self, user):
         auth_token, token_instance = AuthToken.objects.create(user)
 
@@ -250,7 +239,6 @@ class TestChangePasswordSerializer:
             in serializer.errors["old_password"]
         )
 
-    @pytest.mark.django_db
     def test_change_password_serializer_new_password_too_short(self, user):
         auth_token, token_instance = AuthToken.objects.create(user)
 
@@ -272,7 +260,6 @@ class TestChangePasswordSerializer:
             in serializer.errors["new_password"]
         )
 
-    @pytest.mark.django_db
     def test_change_password_serializer_check_new_password(self, user):
         auth_token, token_instance = AuthToken.objects.create(user)
 
@@ -300,7 +287,6 @@ class TestChangePasswordSerializer:
         assert check_password("newStrongPassword", user.password)
 
 
-@pytest.mark.django_db
 class TestAddImageSerializer:
     @pytest.fixture
     def user(self):
@@ -369,7 +355,6 @@ class TestAddImageSerializer:
         )
 
 
-@pytest.mark.django_db
 class TestThumbnailSerializer:
     def test_invalid_size(self):
         image_file = UserImageFactory.create_image("example.jpg", 200, "image/jpeg")
@@ -390,7 +375,6 @@ class TestThumbnailSerializer:
         assert "No file was submitted." in serializer.errors["image"]
 
 
-@pytest.mark.django_db
 class TestBasicUserImageSerializer:
     def test_invalid_name(self):
         invalid_data = {"id": 1, "name": "a" * 165, "thumbnails": []}
@@ -409,7 +393,6 @@ class TestBasicUserImageSerializer:
         assert serializer.is_valid()
 
 
-@pytest.mark.django_db
 class TestNotBasicUserImageSerializer:
     def test_invalid_name(self):
         invalid_data = {
