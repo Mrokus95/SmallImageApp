@@ -12,9 +12,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Thumbnail, UserImage
-from .serializers import (AddImageSerializer, AuthSerializer,
-                          BasicUserImageSerializer, ChangePasswordSerializer,
-                          NotBasicUserImageSerializer, UserSerializer)
+from .serializers import (
+    AddImageSerializer,
+    AuthSerializer,
+    BasicUserImageSerializer,
+    ChangePasswordSerializer,
+    NotBasicUserImageSerializer,
+    UserSerializer,
+)
 
 User = get_user_model()
 
@@ -69,6 +74,7 @@ class CreateUserView(generics.CreateAPIView):
     """
     View for creating a new user.
     """
+
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["post"]
     serializer_class = UserSerializer
@@ -105,8 +111,9 @@ class ChangePasswordView(generics.UpdateAPIView):
     """
     An endpoint for changing password.
     """
+
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ["update"]
+    http_method_names = ["patch"]
     serializer_class = ChangePasswordSerializer
     model = User
 
@@ -123,7 +130,7 @@ class ChangePasswordView(generics.UpdateAPIView):
         obj = self.request.user
         return obj
 
-    def update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
         Handle password update requests.
 
@@ -206,7 +213,7 @@ class UserImagesViewSet(ModelViewSet):
     Viewset for managing user images.
     """
 
-    permission_classes = [permissions.IsAuthenticated&IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated & IsOwnerOrReadOnly]
     http_method_names = ["get", "post", "delete"]
 
     def get_serializer_class(self):
@@ -256,7 +263,7 @@ class GenerateTemporaryLinkView(views.APIView):
     Generate temporary links to access files.
     """
 
-    permission_classes = [permissions.IsAuthenticated&IsOwnerAndEnterprise]
+    permission_classes = [permissions.IsAuthenticated & IsOwnerAndEnterprise]
     http_method_names = ["get"]
 
     def get(self, request, *args, **kwargs):
