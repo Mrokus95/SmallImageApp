@@ -19,7 +19,7 @@ class ThumbnailSizeFactory(DjangoModelFactory):
     class Meta:
         model = ThumbnailSize
 
-    size = factory.LazyAttribute(lambda _: faker.random_int(min=50, max=200))
+    size = factory.LazyAttribute(lambda _: faker.random_int(min=20, max=250))
 
 
 class AccountTypeFactory(DjangoModelFactory):
@@ -51,9 +51,9 @@ class CustomUserFactory(DjangoModelFactory):
     class Meta:
         model = CustomUser
 
-    username = fake.unique.name()
+    username = factory.LazyAttribute(lambda _: fake.word())
     account_type = factory.SubFactory(AccountTypeFactory)
-    email = fake.unique.email()
+    email = factory.LazyAttribute(lambda _: fake.email())
     password = 'Strongpassword'
     is_staff = False
     is_active = True
@@ -69,7 +69,7 @@ class UserImageFactory(factory.django.DjangoModelFactory):
     author = factory.SubFactory(CustomUserFactory)
 
     @staticmethod
-    def create_image(file_full_name, size, content_type, format="JPEG"):
+    def create_image(file_full_name, size, content_type="image/jpeg", format="JPEG"):
         image = Image.new("RGB", (size, size))
         image_io = io.BytesIO()
         image.save(image_io, format=format)
@@ -79,7 +79,7 @@ class UserImageFactory(factory.django.DjangoModelFactory):
         return image_file
 
     image = factory.LazyAttribute(
-        lambda o: UserImageFactory.create_image(f"{o.name}.jpg", 200, "image/jpeg")
+        lambda o: UserImageFactory.create_image(f"{o.name}.jpg", 200)
     )
 
     @factory.post_generation

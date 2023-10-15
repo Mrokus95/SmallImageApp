@@ -113,26 +113,33 @@ class AddImageSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("This field is required.")
 
+        allowed_extensions_and_formats = ["jpg", "jpeg", "png"]
+        allowed_content_type = ["image/jpg", "image/jpeg", "image/png"]
+
         image_extension = value.name.split(".")[-1].lower()
-        if image_extension not in ["jpg", "jpeg" "png"]:
+        content_type = value.content_type.lower()
+
+        if image_extension not in allowed_extensions_and_formats:
             raise serializers.ValidationError(
-                f"{image_extension} - Invalid file extension. Only JPG, JPEG,"
-                "and PNG files are accepted."
+                f"{image_extension} - Invalid file extension. Only {allowed_extensions_and_formats} files are accepted."
             )
 
         try:
             img = Image.open(value)
-            if img.format.lower() not in ["jpg", "jpeg", "png"]:
+            if img.format.lower() not in allowed_extensions_and_formats:
                 raise serializers.ValidationError(
-                    f"{image_extension} - Invalid file format. Only JPG, JPEG,"
-                    "and PNG files are accepted."
+                    f"{img.format.lower()} - Invalid file format. Only {allowed_extensions_and_formats} files are accepted."
                 )
         except Exception as e:
             raise serializers.ValidationError(
-                "Cannot open the file as an image."
-                " Please check if the uploaded file is a valid image."
+                "Cannot open the file as an image. Please check if the uploaded file is a valid image."
             )
-
+        
+        if content_type not in allowed_content_type:
+            raise serializers.ValidationError(
+                f"{content_type} - Invalid file content-type. Only {allowed_content_type} files are accepted."
+            )
+            
         return value
 
 

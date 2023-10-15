@@ -228,13 +228,13 @@ class UserImagesViewSet(ModelViewSet):
                 return BasicUserImageSerializer
 
     def get_queryset(self):
-        return UserImage.objects.filter(author=self.request.user)
+        return UserImage.objects.filter(author=self.request.user).order_by('id')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
         data["author"] = request.user
@@ -242,7 +242,7 @@ class UserImagesViewSet(ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return JsonResponse(
+        return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 

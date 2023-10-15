@@ -316,7 +316,7 @@ class TestAddImageSerializer:
         serializer = AddImageSerializer(data=data)
         assert not serializer.is_valid()
         assert (
-            "gif - Invalid file extension. Only JPG, JPEG,and PNG files are accepted."
+            "gif - Invalid file extension. Only ['jpg', 'jpeg', 'png'] files are accepted."
             in serializer.errors["image"]
         )
 

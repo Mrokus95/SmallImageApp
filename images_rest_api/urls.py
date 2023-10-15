@@ -19,8 +19,8 @@ urlpatterns = [
     path('user_profile/', ManageUserView.as_view(), name='profile'),
     path('change_password/', ChangePasswordView.as_view(), name='change_password'),
 
-    path('login/', LoginView.as_view(), name='knox_login'),
-    path('logout/', knox_views.LogoutView.as_view(), name='knox_logout'),
-    path('logoutall/', knox_views.LogoutAllView.as_view(), name='knox_logoutall'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', knox_views.LogoutView.as_view(), name='logout'),
+    path('logoutall/', knox_views.LogoutAllView.as_view(), name='logoutall'),
     path("", include(router.urls)),
 ]
