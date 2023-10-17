@@ -4,6 +4,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   extend_schema, extend_schema_serializer,
+                                   extend_schema_view)
 from knox.models import AuthToken
 from knox.views import LoginView as KnoxLoginView
 from rest_framework import generics, permissions, status, views
@@ -12,14 +16,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Thumbnail, UserImage
-from .serializers import (
-    AddImageSerializer,
-    AuthSerializer,
-    BasicUserImageSerializer,
-    ChangePasswordSerializer,
-    NotBasicUserImageSerializer,
-    UserSerializer,
-)
+from .serializers import (AddImageSerializer, AuthSerializer,
+                          BasicUserImageSerializer, ChangePasswordSerializer,
+                          NotBasicUserImageSerializer, UserSerializer)
 
 User = get_user_model()
 
@@ -70,6 +69,69 @@ class IsOwnerAndEnterprise(permissions.BasePermission):
         return is_owner and has_time_limited_link
 
 
+@extend_schema_view(
+    post=extend_schema(
+        request=UserSerializer,
+        responses={200: ChangePasswordSerializer},
+        parameters=[
+            OpenApiParameter(
+                name="Authorization",
+                description='Token should be included in the Authorization header as "Token your_token_here".',
+                type=OpenApiTypes.STR,
+                required=True,
+                location=OpenApiParameter.HEADER,
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                "Valid example",
+                summary="Successful create user.",
+                description="An example of a successful user creating.",
+                value={
+                    "user": {
+                        "username": "Student500",
+                        "email": "student500@studnet.pl",
+                        "account_type": 1,
+                    },
+                    "token": "c41307244c1648a62034ca7bd90f5097aa848b05ef94da7b1c1284ff3fd7dcaf",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example",
+                summary="Failed create user.",
+                description="Failed user creating - not unique email address",
+                value={"detail": "A user with this email address already exists."},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example 2",
+                summary="Failed create user.",
+                description="Failed user creating - not unique username",
+                value={"detail": "A user with this username already exists."},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example 3",
+                summary="Failed create user.",
+                description="Failed user creating - incorect type of account_type id.",
+                value={
+                    "account_type": ["Incorrect type. Expected pk value, received str."]
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example 4",
+                summary="Failed create user.",
+                description="Failed user creating - account_type id not found",
+                value={
+                    "account_type": ['Invalid pk "645654" - object does not exist.']
+                },
+                request_only=True,
+            ),
+        ],
+    )
+)
 class CreateUserView(generics.CreateAPIView):
     """
     View for creating a new user.
@@ -103,10 +165,75 @@ class CreateUserView(generics.CreateAPIView):
                 },
                 status=status.HTTP_201_CREATED,
             )
+
+        elif "email" in serializer.errors:
+            return Response(
+                {"detail": "A user with this email address already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif "username" in serializer.errors:
+            return Response(
+                {"detail": "A user with this username already exists."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema_view(
+    patch=extend_schema(
+        request=ChangePasswordSerializer,
+        responses={
+            200: ChangePasswordSerializer,
+            400: {"description": "Invalid credentials."},
+            401: {"description": "New password must be at least 7 characters long."},
+        },
+        parameters=[
+            OpenApiParameter(
+                name="Authorization",
+                description='Token should be included in the Authorization header as "Token your_token_here".',
+                type=OpenApiTypes.STR,
+                required=True,
+                location=OpenApiParameter.HEADER,
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                "Valid example",
+                summary="Successful change password.",
+                description="An example of a successful changing password response.",
+                value={
+                    "status": "success",
+                    "code": 200,
+                    "message": "Password updated successfully",
+                    "data": [],
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example",
+                summary="Failed login example - lack of token",
+                description="An example of a failed login response.",
+                value={"detail": "Invalid token."},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example 2",
+                summary="Failed login example - invalid old password",
+                description="An example of a failed login response.",
+                value={"detail": "Invalid credentials."},
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example 3",
+                summary="Failed login example - invalid new password",
+                description="An example of a failed login response.",
+                value={"detail": ["New password must be at least 7 characters long."]},
+                request_only=True,
+            ),
+        ],
+    )
+)
 class ChangePasswordView(generics.UpdateAPIView):
     """
     An endpoint for changing password.
@@ -158,10 +285,53 @@ class ChangePasswordView(generics.UpdateAPIView):
                 },
                 status=status.HTTP_200_OK,
             )
+
+        elif "old_password" in serializer.errors:
+            return Response(
+                {"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED
+            )
+        elif "new_password" in serializer.errors:
+            return Response(
+                {"detail": "New password must be at least 7 characters long."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema_view(
+    post=extend_schema(
+        request=AuthSerializer,
+        responses={
+            200: AuthSerializer,
+            401: {"detail": "Authentication failed."},
+        },
+        examples=[
+            OpenApiExample(
+                "Valid example",
+                summary="Successful login example",
+                description="An example of a successful login response.",
+                value={
+                    "expiry": "2023-10-14T18:48:45.058484Z",
+                    "token": "fb6461f3bebf7a78b70814ef8508e57994be63d1dbf8ada54dc5fb9932ce13d7",
+                    "user": {
+                        "username": "SampleUser",
+                        "email": "sample@example.com",
+                        "account_type": 1,
+                    },
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example",
+                summary="Failed login example",
+                description="An example of a failed login response.",
+                value={"detail": "Authentication failed."},
+                request_only=True,
+            ),
+        ],
+    )
+)
 class LoginView(KnoxLoginView):
     """
     An endpoint for user login.
@@ -183,12 +353,55 @@ class LoginView(KnoxLoginView):
             Response: The HTTP response.
         """
         serializer = AuthTokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        login(request, user)
-        return super(LoginView, self).post(request, format=None)
+        if serializer.is_valid(raise_exception=False):
+            user = serializer.validated_data["user"]
+            login(request, user)
+            return super(LoginView, self).post(request, format=None)
+        else:
+            return Response(
+                {"detail": "Authentication failed."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
 
+@extend_schema_view(
+    get=extend_schema(
+        request=UserSerializer,
+        responses={
+            200: UserSerializer,
+            401: {"description": "Authentication credentials were not provided."},
+        },
+        parameters=[
+            OpenApiParameter(
+                name="Authorization",
+                description='Token should be included in the Authorization header as "Token your_token_here".',
+                type=OpenApiTypes.STR,
+                required=True,
+                location=OpenApiParameter.HEADER,
+            ),
+        ],
+        examples=[
+            OpenApiExample(
+                "Valid example",
+                summary="Successful get user profile data.",
+                description="An example of a successful get user profile data.",
+                value={
+                    "username": "admin",
+                    "email": "admin@admin.pl",
+                    "account_type": 3,
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example",
+                summary="Failed lget user profile data.",
+                description="An example of a failed login response - invalid token.",
+                value={"detail": "Authentication credentials were not provided."},
+                request_only=True,
+            ),
+        ],
+    )
+)
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """
     Manage the authenticated user.
@@ -208,6 +421,17 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name="Authorization",
+            description='Token should be included in the Authorization header as "Token your_token_here".',
+            type=OpenApiTypes.STR,
+            required=True,
+            location=OpenApiParameter.HEADER,
+        ),
+    ],
+)
 class UserImagesViewSet(ModelViewSet):
     """
     Viewset for managing user images.
@@ -228,8 +452,34 @@ class UserImagesViewSet(ModelViewSet):
                 return BasicUserImageSerializer
 
     def get_queryset(self):
-        return UserImage.objects.filter(author=self.request.user).order_by('id')
+        return UserImage.objects.filter(author=self.request.user).order_by("id")
 
+    @extend_schema(
+        responses={
+            200: UserSerializer,
+            401: {"description": "Authentication credentials were not provided."},
+        },
+        examples=[
+            OpenApiExample(
+                "Valid example",
+                summary="Successful get user profile data.",
+                description="An example of a successful get user profile data.",
+                value={
+                    "username": "admin",
+                    "email": "admin@admin.pl",
+                    "account_type": 3,
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Invalid example",
+                summary="Failed lget user profile data.",
+                description="An example of a failed login response - invalid token.",
+                value={"detail": "Authentication credentials were not provided."},
+                request_only=True,
+            ),
+        ],
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 

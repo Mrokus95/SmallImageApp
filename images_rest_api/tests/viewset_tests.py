@@ -133,7 +133,9 @@ class TestCreateUserView:
         response = client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "custom user with this email already exists." in response.data["email"]
+        assert (
+            "A user with this email address already exists." in response.data["detail"]
+        )
 
     def test_create_user_view_duplicate_username(self, user):
         token_instance = user[1]
@@ -159,10 +161,7 @@ class TestCreateUserView:
         response = client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert (
-            "custom user with this username already exists."
-            in response.data["username"]
-        )
+        assert "A user with this username already exists." in response.data["detail"]
 
 
 class TestChangePasswordView:
@@ -210,11 +209,8 @@ class TestChangePasswordView:
         initial_password = user.password
 
         response = client.patch(url, data, format="json")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert (
-            "Unable to authenticate with provided credentials."
-            in response.data["old_password"]
-        )  #
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert "Invalid credentials." in response.data["detail"]  #
         user.refresh_from_db()
         assert user.password == initial_password
 
@@ -237,7 +233,7 @@ class TestChangePasswordView:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (
             "New password must be at least 7 characters long."
-            in response.data["new_password"]
+            in response.data["detail"]
         )
         user.refresh_from_db()
         assert user.password == initial_password
@@ -296,7 +292,7 @@ class TestLoginView:
 
         client = APIClient()
         response = client.post(url, data, format="json")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestManageUserView:

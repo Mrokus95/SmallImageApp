@@ -32,9 +32,8 @@ class UserSerializer(serializers.ModelSerializer):
         username = data
 
         if User.objects.filter(username=username).exists():
-            raise serializers.ValidationError(
-                {"username": "A user with this username already exists."}
-            )
+            msg = "A user with this username already exists."
+            raise serializers.ValidationError({"username": msg,}, code="invalid_username")
 
         return data
 
@@ -42,10 +41,8 @@ class UserSerializer(serializers.ModelSerializer):
         email = data
 
         if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                "A user with this email address already exists."
-            )
-
+            msg = "A user with this email address already exists."
+            raise serializers.ValidationError({"email": msg,}, code="invalid_email")
         return data
 
 
@@ -90,11 +87,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         if not user:
             msg = "Unable to authenticate with provided credentials."
-            raise serializers.ValidationError({"old_password": msg})
+            raise serializers.ValidationError({"old_password": msg,}, code="invalid_credentials")
 
         if len(new_password) < 7:
             msg = "New password must be at least 7 characters long."
-            raise serializers.ValidationError({"new_password": msg})
+            raise serializers.ValidationError({"new_password": msg}, code="password_too_short")
 
         return attrs
 

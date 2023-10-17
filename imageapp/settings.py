@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     "django_extensions",
     "images_rest_api",
     "storages",
-    "knox"
+    "knox",
+    "drf_spectacular"
 ]
 
 MIDDLEWARE = [
@@ -135,6 +136,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "knox.auth.TokenAuthentication",
     ],
@@ -168,4 +170,18 @@ AWS_CLOUDFRONT_KEY = os.environ.get("AWS_CLOUDFRONT_KEY")
 
 REST_KNOX = {
     'USER_SERIALIZER': 'images_rest_api.serializers.UserSerializer'
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': "ImageApp API",
+    'VERSION': '1.0.0',
+    'CAMELIZE_NAMES': True,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'filter': True,
+        'displayRequestDuration': True,
+        'syntaxHighlight.activate': True,
+        'syntaxHighlight.theme': 'monokai',
+    },
 }
