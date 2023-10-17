@@ -493,7 +493,7 @@ class TestGenerateTemporaryLinkView:
 
         url = reverse(
             "generate-temporary-link",
-            args=("user_image", user_image.id),
+            args=("image", user_image.id),
         )
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + token)
@@ -505,6 +505,32 @@ class TestGenerateTemporaryLinkView:
             Params={
                 "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
                 "Key": user_image.image.name,
+            },
+            ExpiresIn=3600,
+        )
+
+    def test_generate_temporary_link_for_user_thumbnail(self, mocker, user):
+        user, token = user
+        user_image = UserImageFactory(author=user)
+        mock_s3 = mocker.patch("boto3.client")
+        mock_generate_presigned_url = MagicMock()
+        mock_s3.return_value.generate_presigned_url = mock_generate_presigned_url
+        mock_generate_presigned_url.return_value = "temporary_url"
+
+        url = reverse(
+            "generate-temporary-link",
+            args=("thumbnail", user_image.thumbnails.first().id),
+        )
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        response = client.get(url, format="json")
+        assert response.status_code == status.HTTP_200_OK
+
+        mock_generate_presigned_url.assert_called_with(
+            "get_object",
+            Params={
+                "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                "Key": user_image.thumbnails.first().image.name,
             },
             ExpiresIn=3600,
         )

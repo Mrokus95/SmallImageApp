@@ -530,7 +530,7 @@ class GenerateTemporaryLinkView(views.APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if file_type == "user_image":
+        if file_type == "image":
             model_class = UserImage
         elif file_type == "thumbnail":
             model_class = Thumbnail
