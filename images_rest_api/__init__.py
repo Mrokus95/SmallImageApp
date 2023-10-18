@@ -1,0 +1,1 @@
+default_app_config = 'images_rest_api.apps.ImagesRestApiConfig'

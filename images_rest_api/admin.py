@@ -7,8 +7,13 @@ from django import forms
 
 @admin.register(AccountType)
 class AccountTypeAdmin(admin.ModelAdmin):
-    list_display = ("name", "orginal_image_link", "time_limited_link", 
-                    "display_thumbs")
+    list_display = (
+        "id",
+        "name",
+        "orginal_image_link",
+        "time_limited_link",
+        "display_thumbs",
+    )
 
     def display_thumbs(self, obj):
         return ", ".join([str(thumb.size) for thumb in obj.thumbs.all()])
@@ -21,16 +26,8 @@ class ThumbnailSizeAdmin(admin.ModelAdmin):
     list_display = ("__str__",)
 
 
-class CustomUserCreationForm(UserCreationForm):
-    class Meta:
-        model = CustomUser
-        fields = ("username", "password", "email", "account_type")
-
-
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    form = CustomUserCreationForm
-    add_form = CustomUserCreationForm
     list_display = (
         "username",
         "email",
@@ -38,6 +35,29 @@ class CustomUserAdmin(UserAdmin):
         "is_active",
         "is_staff",
         "is_superuser",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "username",
+                    "email",
+                    "password",
+                    "account_type",
+                )
+            },
+        ),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                )
+            },
+        ),
     )
     add_fieldsets = (
         (
@@ -47,11 +67,12 @@ class CustomUserAdmin(UserAdmin):
                 "fields": (
                     "username",
                     "email",
-                    "first_name",
-                    "last_name",
                     "password1",
                     "password2",
                     "account_type",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
                 ),
             },
         ),
