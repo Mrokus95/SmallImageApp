@@ -1,4 +1,5 @@
 import pytest
+from imageapp import settings 
 from pytest_factoryboy import register
 
 from .factories import (AccountTypeFactory, CustomUserFactory,

@@ -26,7 +26,8 @@ class TestCustomUser:
     def test_new_superuser(self):
         db = get_user_model()
         superuser = db.objects.create_superuser(
-            "testuser", "testuser@email.com", "strongpassword", self.account_type.id
+            "testuser", "testuser@email.com", "strongpassword", 
+            self.account_type.id
         )
         assert superuser.username == "testuser"
         assert superuser.email == "testuser@email.com"
@@ -67,7 +68,8 @@ class TestCustomUser:
     def test_new_user(self):
         db = get_user_model()
         user = db.objects.create_user(
-            "testuser", "testuser@email.com", "strongpassword", self.account_type.id
+            "testuser", "testuser@email.com", "strongpassword", 
+            self.account_type.id
         )
         assert user.username == "testuser"
         assert user.email == "testuser@email.com"

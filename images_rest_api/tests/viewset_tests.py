@@ -134,7 +134,8 @@ class TestCreateUserView:
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert (
-            "A user with this email address already exists." in response.data["detail"]
+            "A user with this email address already exists." in \
+                response.data["detail"]
         )
 
     def test_create_user_view_duplicate_username(self, user):
@@ -161,7 +162,8 @@ class TestCreateUserView:
         response = client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "A user with this username already exists." in response.data["detail"]
+        assert "A user with this username already exists." in \
+        response.data["detail"]
 
 
 class TestChangePasswordView:
@@ -390,7 +392,7 @@ class TestUserImagesViewSet:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_send_not_an_image(self, user, image):
+    def test_send_an_image_unathorized(self, user, image):
         user, _ = user
         url = reverse("userimage-list")
 
@@ -409,7 +411,8 @@ class TestUserImagesViewSet:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + token)
 
-        not_an_image_file = SimpleUploadedFile("not_an_image.txt", b"Test file content")
+        not_an_image_file = SimpleUploadedFile("not_an_image.txt", \
+            b"Test file content")
 
         data = {
             "name": "test_picture",
@@ -549,8 +552,10 @@ class TestGenerateTemporaryLinkView:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + token)
 
-        response = client.get(url, {"expiration_time_seconds": 299}, format="json")
+        response = client.get(url, {"expiration_time_seconds": 299}, 
+        format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-        response = client.get(url, {"expiration_time_seconds": 30001}, format="json")
+        response = client.get(url, {"expiration_time_seconds": 30001}, 
+        format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST

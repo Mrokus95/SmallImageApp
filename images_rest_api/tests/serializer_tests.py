@@ -296,7 +296,8 @@ class TestAddImageSerializer:
         return user
 
     def test_valid_image(self):
-        image_file = UserImageFactory.create_image("example.jpg", 200, "image/jpeg")
+        image_file = UserImageFactory.create_image("example.jpg", 200, 
+        "image/jpeg")
         data = {"id": 1, "name": "example.jpg", "image": image_file}
         serializer = AddImageSerializer(data=data)
         assert serializer.is_valid()
@@ -311,7 +312,8 @@ class TestAddImageSerializer:
         assert "No file was submitted." in serializer.errors["image"]
 
     def test_invalid_extension(self):
-        image_file = UserImageFactory.create_image("example.gif", 200, "image/gif")
+        image_file = UserImageFactory.create_image("example.gif", 200, 
+        "image/gif")
         data = {"id": 1, "name": "example.gif", "image": image_file}
         serializer = AddImageSerializer(data=data)
         assert not serializer.is_valid()
@@ -344,7 +346,8 @@ class TestAddImageSerializer:
 
     def test_long_name(self):
         long_name = "a" * 165
-        image_file = UserImageFactory.create_image("example.jpg", 200, "image/jpeg")
+        image_file = UserImageFactory.create_image("example.jpg", 200, 
+        "image/jpeg")
         data = {"id": 1, "name": long_name, "image": image_file}
         serializer = AddImageSerializer(data=data)
 
@@ -357,7 +360,8 @@ class TestAddImageSerializer:
 
 class TestThumbnailSerializer:
     def test_invalid_size(self):
-        image_file = UserImageFactory.create_image("example.jpg", 200, "image/jpeg")
+        image_file = UserImageFactory.create_image("example.jpg", 200, \
+            "image/jpeg")
         invalid_data = {"id": 1, "size": -100, "image": image_file}
         serializer = ThumbnailSerializer(data=invalid_data)
 

@@ -33,7 +33,8 @@ class UserSerializer(serializers.ModelSerializer):
 
         if User.objects.filter(username=username).exists():
             msg = "A user with this username already exists."
-            raise serializers.ValidationError({"username": msg,}, code="invalid_username")
+            raise serializers.ValidationError({"username": msg,}, 
+            code="invalid_username")
 
         return data
 
@@ -42,7 +43,8 @@ class UserSerializer(serializers.ModelSerializer):
 
         if User.objects.filter(email=email).exists():
             msg = "A user with this email address already exists."
-            raise serializers.ValidationError({"email": msg,}, code="invalid_email")
+            raise serializers.ValidationError({"email": msg,}, 
+            code="invalid_email")
         return data
 
 
@@ -87,11 +89,13 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         if not user:
             msg = "Unable to authenticate with provided credentials."
-            raise serializers.ValidationError({"old_password": msg,}, code="invalid_credentials")
+            raise serializers.ValidationError({"old_password": msg,}, 
+            code="invalid_credentials")
 
         if len(new_password) < 7:
             msg = "New password must be at least 7 characters long."
-            raise serializers.ValidationError({"new_password": msg}, code="password_too_short")
+            raise serializers.ValidationError({"new_password": msg}, 
+            code="password_too_short")
 
         return attrs
 
@@ -100,11 +104,18 @@ class ChangePasswordSerializer(serializers.Serializer):
         instance.save()
         return instance
 
+class ThumbnailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Thumbnail
+        fields = ["id", "size", "image"]
 
 class AddImageSerializer(serializers.ModelSerializer):
+
+    image = serializers.ImageField(write_only=True)
+
     class Meta:
         model = UserImage
-        fields = ["id", "name", "image"]
+        fields = ["id", "name","image"]
 
     def validate_image(self, value):
         if not value:
@@ -139,11 +150,6 @@ class AddImageSerializer(serializers.ModelSerializer):
             
         return value
 
-
-class ThumbnailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Thumbnail
-        fields = ["id", "size", "image"]
 
 
 class BasicUserImageSerializer(serializers.ModelSerializer):
