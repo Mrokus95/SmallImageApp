@@ -8,5 +8,3 @@ class ImagesRestApiConfig(AppConfig):
     def ready(self):
         import images_rest_api.signals 
         import images_rest_api.scheme
-        from .scripts import updater
-        updater.start()
