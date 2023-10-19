@@ -14,6 +14,7 @@ Welcome to the SmallImage App!
 This is a Django Rest Framework (DRF) project that enables users to upload images and acquire links to their thumbnails. If you don't have much time to install the project but are interested in it, you can check out the live version of SmallImage <a href="https://imageapp-ereajzel.pythonanywhere.com/"> HERE</a> with this test account: 
 - username : TestUser , 
 - password : TestPassword
+
 TestUser's password resets every hour, so feel free to test the password change endpoint as well. Just keep in mind that this project has throttling limits, so if you need more request vouchers (error HTTP 429 (Too Many Requests)), please contact me or wait until the next day for a refresh."
 
 
