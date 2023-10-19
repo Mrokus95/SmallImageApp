@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     "images_rest_api",
     "storages",
     "knox",
-    "drf_spectacular"
+    "drf_spectacular",
+    "django_apscheduler"
 ]
 
 MIDDLEWARE = [
@@ -140,12 +141,25 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "knox.auth.TokenAuthentication",
     ],
+        'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+        'rest_framework.parsers.FileUploadParser',
+    ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "others": "350/day",
+        "images": "35/day"
+    }
 }
 
 AUTH_USER_MODEL ='images_rest_api.CustomUser'
@@ -185,3 +199,13 @@ SPECTACULAR_SETTINGS = {
         'syntaxHighlight.theme': 'monokai',
     },
 }
+
+SCHEDULER_CONFIG = {
+    "apscheduler.jobstores.default": {
+        "class": "django_apscheduler.jobstores:DjangoJobStore"
+    },
+    'apscheduler.executors.processpool': {
+        "type": "threadpool"
+    },
+}
+SCHEDULER_AUTOSTART = True

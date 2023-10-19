@@ -30,6 +30,8 @@ from .serializers import (
     NotBasicUserImageSerializer,
     UserSerializer,
 )
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import FormParser
 
 User = get_user_model()
 
@@ -71,44 +73,6 @@ class IsOwnerAndEnterprise(permissions.BasePermission):
     post=extend_schema(
         request=UserSerializer,
         responses={200: ChangePasswordSerializer},
-        parameters=[
-            OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization\
-                    header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-            OpenApiParameter(
-                name="username",
-                description="User's username",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="email",
-                description="User's email address.",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="password",
-                description="User's password, min. length: 7",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="account_type",
-                description="User's account type id",
-                type=OpenApiTypes.INT,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
         examples=[
             OpenApiExample(
                 "Valid example",
@@ -122,21 +86,21 @@ class IsOwnerAndEnterprise(permissions.BasePermission):
                     },
                     "token": "c41307244c1648a62034ca7bd90f5097aa848b05ef94da",
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example",
                 summary="Failed create user.",
                 description="Failed user creating - not unique email address",
                 value={"detail": "A user with this email address already exists."},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example 2",
                 summary="Failed create user.",
                 description="Failed user creating - not unique username",
                 value={"detail": "A user with this username already exists."},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example 3",
@@ -147,7 +111,7 @@ class IsOwnerAndEnterprise(permissions.BasePermission):
                     "account_type": ["Incorrect type. Expected pk value,\
                         received str."]
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example 4",
@@ -157,7 +121,7 @@ class IsOwnerAndEnterprise(permissions.BasePermission):
                     "account_type": ['Invalid pk "645654" - \
                         object does not exist.']
                 },
-                request_only=True,
+                response_only=True,
             ),
         ],
     )
@@ -166,7 +130,7 @@ class CreateUserView(generics.CreateAPIView):
     """
     View for creating a new user.
     """
-
+    throttle_scope = 'others'
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["post"]
     serializer_class = UserSerializer
@@ -209,30 +173,6 @@ class CreateUserView(generics.CreateAPIView):
             401: {"description": "New password must be at least 7\
                 characters long."},
         },
-        parameters=[
-            OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization\
-                     header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-            OpenApiParameter(
-                name="old_password",
-                description="User actual password",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="new_password",
-                description="User new password, min. length: 7",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
         examples=[
             OpenApiExample(
                 "Valid example",
@@ -245,21 +185,21 @@ class CreateUserView(generics.CreateAPIView):
                     "message": "Password updated successfully",
                     "data": [],
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example",
                 summary="Failed login example - lack of token",
                 description="An example of a failed login response.",
                 value={"detail": "Invalid token."},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example 2",
                 summary="Failed login example - invalid old password",
                 description="An example of a failed login response.",
                 value={"detail": "Invalid credentials."},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example 3",
@@ -267,7 +207,7 @@ class CreateUserView(generics.CreateAPIView):
                 description="An example of a failed login response.",
                 value={"detail": ["New password must be at least 7 \
                     characters long."]},
-                request_only=True,
+                response_only=True,
             ),
         ],
     )
@@ -277,6 +217,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     An endpoint for changing user's password.
     """
 
+    throttle_scope = 'others'
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["patch"]
     serializer_class = ChangePasswordSerializer
@@ -322,22 +263,6 @@ class ChangePasswordView(generics.UpdateAPIView):
 @extend_schema_view(
     post=extend_schema(
         request=AuthSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="username",
-                description="User username.",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="password",
-                description="User password.",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
         examples=[
             OpenApiExample(
                 "Valid example",
@@ -352,14 +277,14 @@ class ChangePasswordView(generics.UpdateAPIView):
                         "account_type": 1,
                     },
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example",
                 summary="Failed login example",
                 description="An example of a failed login response.",
                 value={"detail": "Authentication failed."},
-                request_only=True,
+                response_only=True,
             ),
         ],
     )
@@ -369,6 +294,7 @@ class LoginView(KnoxLoginView):
     An endpoint for user login.
     """
 
+    throttle_scope = 'others'
     serializer_class = AuthSerializer
     permission_classes = (permissions.AllowAny,)
     http_method_names = ["post"]
@@ -389,16 +315,6 @@ class LoginView(KnoxLoginView):
 @extend_schema_view(
     post=extend_schema(
         request=AuthSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization \
-                    header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-        ],
     )
 )
 class LogoutView(KnoxLogoutView):
@@ -406,6 +322,7 @@ class LogoutView(KnoxLogoutView):
     An endpoint for user logout.
     """
 
+    throttle_scope = 'others'
     serializer_class = AuthSerializer
     permission_classes = (permissions.IsAuthenticated,)
     http_method_names = ["post"]
@@ -417,16 +334,6 @@ class LogoutView(KnoxLogoutView):
 @extend_schema_view(
     post=extend_schema(
         request=AuthSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization \
-                    header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-        ],
     )
 )
 class LogoutAllView(KnoxLogoutAllView):
@@ -434,6 +341,7 @@ class LogoutAllView(KnoxLogoutAllView):
     An endpoint for user logout at all devices.
     """
 
+    throttle_scope = 'others'
     serializer_class = AuthSerializer
     permission_classes = (permissions.IsAuthenticated,)
     http_method_names = ["post"]
@@ -445,16 +353,6 @@ class LogoutAllView(KnoxLogoutAllView):
 @extend_schema_view(
     get=extend_schema(
         request=UserSerializer,
-        parameters=[
-            OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization\
-                     header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-        ],
         examples=[
             OpenApiExample(
                 "Valid example",
@@ -465,7 +363,7 @@ class LogoutAllView(KnoxLogoutAllView):
                     "email": "admin@admin.pl",
                     "account_type": 3,
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example",
@@ -474,7 +372,7 @@ class LogoutAllView(KnoxLogoutAllView):
                      token.",
                 value={"detail": "Authentication credentials were not \
                     provided."},
-                request_only=True,
+                response_only=True,
             ),
         ],
     )
@@ -484,6 +382,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     An endpoint for get user profile data.
     """
 
+    throttle_scope = 'others'
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)
     http_method_names = ["get"]
@@ -492,23 +391,12 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-@extend_schema(
-    parameters=[
-        OpenApiParameter(
-            name="Authorization",
-            description='Token should be included in the Authorization header\
-                 as "Token your_token_here".',
-            type=OpenApiTypes.STR,
-            required=True,
-            location=OpenApiParameter.HEADER,
-        ),
-    ],
-)
+
 class UserImagesViewSet(ModelViewSet):
     """
     Viewset for managing user images - list, retrieve, create and delete.
     """
-
+    throttle_scope = 'images'
     permission_classes = [permissions.IsAuthenticated & IsOwnerOrReadOnly]
     http_method_names = ["get", "post", "delete"]
 
@@ -527,22 +415,6 @@ class UserImagesViewSet(ModelViewSet):
         return UserImage.objects.filter(author=self.request.user).order_by("id")
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="name",
-                description="Image name",
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="image",
-                description='Image file in format ".jpg", ".png" or ".jpeg"',
-                type=OpenApiTypes.BINARY,
-                required=True,
-                location=OpenApiParameter.QUERY,
-            ),
-        ],
         examples=[
             OpenApiExample(
                 "Valid example",
@@ -550,7 +422,7 @@ class UserImagesViewSet(ModelViewSet):
                 description="An example of a successful sending a new immage \
                     to server.",
                 value={"id": 17, "name": "icon57"},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example - lack of image.",
@@ -558,7 +430,7 @@ class UserImagesViewSet(ModelViewSet):
                 description="An example of a failure sending a new immage to \
                     server - lack of image.",
                 value={"image": ["No file was submitted."]},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example - invalid photo format",
@@ -571,7 +443,7 @@ class UserImagesViewSet(ModelViewSet):
                              'png'] files are accepted."
                     ]
                 },
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example - blank photo name",
@@ -580,7 +452,7 @@ class UserImagesViewSet(ModelViewSet):
                 description="An example of a failure sending a new immage to \
                     server - invalid photo format.",
                 value={"name": ["This field may not be blank."]},
-                request_only=True,
+                response_only=True,
             ),
             OpenApiExample(
                 "Invalid example - invalid token.",
@@ -588,7 +460,7 @@ class UserImagesViewSet(ModelViewSet):
                 description="An example of a failed sending a new immage to \
                     server - invalid token.",
                 value={"detail": "Invalid token."},
-                request_only=True,
+                response_only=True,
             ),
         ],
     )
@@ -612,7 +484,7 @@ class UserImagesViewSet(ModelViewSet):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name="pk",
+                name="id",
                 description="Image ID.",
                 type=OpenApiTypes.INT,
                 required=True,
@@ -643,23 +515,15 @@ class GenerateTemporaryLinkView(views.APIView):
     - "fileId" - type: int -  'Image or thumbnail id'
 
     """
-
+    throttle_scope = 'images'
     permission_classes = [permissions.IsAuthenticated & IsOwnerAndEnterprise]
     http_method_names = ["get"]
 
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name="Authorization",
-                description='Token should be included in the Authorization \
-                    header as "Token your_token_here".',
-                type=OpenApiTypes.STR,
-                required=True,
-                location=OpenApiParameter.HEADER,
-            ),
-            OpenApiParameter(
                 name="expiration_time_seconds",
-                description="Expiration time in seconds, default 3600",
+                description="Expiration time in seconds, default 3600, min 300, max 30000.",
                 type=OpenApiTypes.INT,
                 required=False,
                 location=OpenApiParameter.QUERY,
